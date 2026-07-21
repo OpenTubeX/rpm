@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>OpenTubeX RPM Repository</title>
+  <link rel="stylesheet" href="/style.css">
+</head>
+<body>
+  <main>
+    <h1>OpenTubeX RPM repository</h1>
+    <p>
+      Fedora and Enterprise Linux packages for
+      <a href="https://opentubex.org/">OpenTubeX</a>.
+    </p>
+
+    <h2>Install</h2>
+    <p>Add the repository once, then install OpenTubeX:</p>
+    <div class="card">
+      <pre><code>sudo curl --fail --location \
+  --output /etc/yum.repos.d/opentubex.repo \
+  https://rpm.opentubex.org/opentubex.repo
+sudo dnf install opentubex</code></pre>
+    </div>
+
+    <h2>Update</h2>
+    <div class="card">
+      <pre><code>sudo dnf upgrade opentubex</code></pre>
+    </div>
+
+    <h2>Manual downloads</h2>
+    <p>
+      You can also download <code>.rpm</code> files directly from
+      <a href="https://github.com/OpenTubeX/OpenTubeX/releases">GitHub Releases</a>.
+      Manual installs are not tied to this repository, so they do not receive
+      automatic updates through DNF.
+    </p>
+
+    <p>
+      <a href="https://github.com/OpenTubeX/rpm">Repository source and maintainer documentation</a>
+    </p>
+  </main>
+</body>
+</html>
