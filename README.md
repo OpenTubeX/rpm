@@ -42,7 +42,7 @@ repository sends an `opentubex-release` repository dispatch containing the
 release tag. The publish workflow then:
 
 1. downloads the `x86_64` and `aarch64` RPM assets;
-2. repackages them with openSUSE dependency names;
+2. repackages them with Fedora-compatible and openSUSE dependency names;
 3. validates and signs the Fedora-compatible and openSUSE packages;
 4. creates signed RPM-MD repositories at `/` and `/opensuse/`;
 5. sends the completed release tag to the COPR custom-package webhook;

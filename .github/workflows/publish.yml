@@ -102,16 +102,18 @@ jobs:
           echo "fingerprint=$fingerprint" >> "$GITHUB_OUTPUT"
           echo "passphrase-file=$passphrase_file" >> "$GITHUB_OUTPUT"
 
-      - name: Build openSUSE packages
+      - name: Build distribution packages
         env:
           VERSION: ${{ steps.release.outputs.version }}
-        run: ./scripts/build-opensuse-packages.sh release-files opensuse-files "$VERSION"
+        run: |
+          ./scripts/build-packages.sh release-files fedora-files "$VERSION" fedora
+          ./scripts/build-packages.sh release-files opensuse-files "$VERSION" opensuse
 
       - name: Build signed repository
         env:
           RPM_GPG_KEY_ID: ${{ steps.signing-key.outputs.fingerprint }}
           RPM_GPG_PASSPHRASE_FILE: ${{ steps.signing-key.outputs.passphrase-file }}
-        run: ./scripts/build-repository.sh release-files repository opensuse-files
+        run: ./scripts/build-repository.sh fedora-files repository opensuse-files
 
       - name: Upload repository
         uses: actions/upload-pages-artifact@7b1f4a764d45c48632c6b24a0339c27f5614fb0b # v4.0.0

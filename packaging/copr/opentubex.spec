@@ -27,7 +27,6 @@ Requires:       (libXtst or libXtst6)
 Requires:       (libuuid or libuuid1)
 Requires:       at-spi2-core
 Requires:       gtk3
-Requires:       libXScrnSaver
 Requires:       libnotify
 Requires:       nss
 Requires:       xdg-utils

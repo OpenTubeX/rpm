@@ -3,13 +3,27 @@
 set -euo pipefail
 
 source_directory=${1:-release-files}
-output_directory=${2:-opensuse-files}
+output_directory=${2:-distribution-files}
 version=${3:-}
+distribution=${4:-}
 
 if [[ ! "$version" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
   printf 'Expected a version like 0.29.0, got: %s\n' "$version" >&2
   exit 1
 fi
+
+case "$distribution" in
+  fedora)
+    rpm_defines=()
+    ;;
+  opensuse)
+    rpm_defines=(--define 'suse_version 160000' --define 'dist .opensuse')
+    ;;
+  *)
+    printf 'Expected distribution to be fedora or opensuse, got: %s\n' "$distribution" >&2
+    exit 1
+    ;;
+esac
 
 for source_name in \
   "opentubex-${version}-beta.amd64.rpm" \
@@ -48,8 +62,7 @@ for architecture in x86_64 aarch64; do
     --nodeps \
     --target "$architecture" \
     --define "_topdir $build_directory" \
-    --define 'suse_version 160000' \
-    --define 'dist .opensuse' \
+    "${rpm_defines[@]}" \
     "$build_directory/SPECS/opentubex.spec"
 done
 
@@ -58,7 +71,7 @@ mkdir -p "$output_directory"
 
 mapfile -t packages < <(find "$build_directory/RPMS" -type f -name '*.rpm' -print | sort)
 if (( ${#packages[@]} != 2 )); then
-  printf 'Expected two openSUSE packages, found %d\n' "${#packages[@]}" >&2
+  printf 'Expected two %s packages, found %d\n' "$distribution" "${#packages[@]}" >&2
   exit 1
 fi
 
