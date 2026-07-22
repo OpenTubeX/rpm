@@ -32,9 +32,11 @@ release tag. The publish workflow then:
 1. downloads the `x86_64` and `aarch64` RPM assets;
 2. validates their package names and RPM architectures;
 3. signs each package and creates signed DNF repository metadata;
-4. creates a source RPM and waits for COPR to build it for the configured
-   Fedora and EPEL chroots;
+4. sends the completed release tag to the COPR custom-package webhook;
 5. deploys the static repository to GitHub Pages.
+
+COPR then downloads the release RPMs, generates its source package, and builds
+and signs packages for the configured Fedora and EPEL chroots.
 
 The workflow can also be run manually with a release tag. If no tag is given,
 it publishes the latest release.
@@ -44,7 +46,9 @@ it publishes the latest release.
 1. Create a dedicated, passphrase-protected GPG key for this repository.
 2. Add its ASCII-armored private key as the `RPM_GPG_PRIVATE_KEY` repository
    secret and its passphrase as `RPM_GPG_PASSPHRASE`.
-3. Add the contents of `~/.config/copr` as the `COPR_CONFIG` repository secret.
+3. Configure the `opentubex` COPR custom package to run
+   `scripts/copr-webhook-source.sh`, then add its package-specific custom
+   webhook URL as the `COPR_WEBHOOK_URL` repository secret.
 4. In **Settings → Pages**, select **GitHub Actions** as the source and configure
    `rpm.opentubex.org` as the custom domain.
 5. Add a DNS `CNAME` record from `rpm.opentubex.org` to
