@@ -10,7 +10,7 @@
   <main>
     <h1>OpenTubeX RPM repository</h1>
     <p>
-      Fedora and Enterprise Linux packages for
+      Fedora, Enterprise Linux, and openSUSE packages for
       <a href="https://opentubex.org/">OpenTubeX</a>.
     </p>
 
@@ -29,9 +29,22 @@ sudo dnf install opentubex</code></pre>
 sudo dnf install opentubex</code></pre>
     </div>
 
+    <p>On openSUSE Leap 16.0 or Tumbleweed, use the OpenTubeX-hosted repository:</p>
+    <div class="card">
+      <pre><code>sudo rpm --import \
+  https://rpm.opentubex.org/opensuse/repodata/repomd.xml.key
+sudo zypper addrepo --refresh \
+  https://rpm.opentubex.org/opensuse/ \
+  opentubex
+sudo zypper install opentubex</code></pre>
+    </div>
+
     <h2>Update</h2>
     <div class="card">
       <pre><code>sudo dnf upgrade opentubex</code></pre>
+    </div>
+    <div class="card">
+      <pre><code>sudo zypper update opentubex</code></pre>
     </div>
 
     <h2>Manual downloads</h2>
@@ -39,7 +52,7 @@ sudo dnf install opentubex</code></pre>
       You can also download <code>.rpm</code> files directly from
       <a href="https://github.com/OpenTubeX/OpenTubeX/releases">GitHub Releases</a>.
       Manual installs are not tied to this repository, so they do not receive
-      automatic updates through DNF.
+      automatic updates through DNF or Zypper.
     </p>
 
     <p>

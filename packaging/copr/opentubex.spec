@@ -1,3 +1,5 @@
+%global __strip /bin/true
+
 Name:           opentubex
 Version:        @VERSION@
 Release:        1%{?dist}
@@ -11,6 +13,16 @@ ExclusiveArch:  x86_64 aarch64
 AutoReqProv:    no
 BuildRequires:  cpio
 BuildRequires:  rpm
+%if 0%{?suse_version}
+Requires:       libXtst6
+Requires:       libuuid1
+Requires:       at-spi2-core
+Requires:       libgtk-3-0
+Requires:       libXss1
+Requires:       libnotify4
+Requires:       mozilla-nss
+Requires:       xdg-utils
+%else
 Requires:       (libXtst or libXtst6)
 Requires:       (libuuid or libuuid1)
 Requires:       at-spi2-core
@@ -19,6 +31,7 @@ Requires:       libXScrnSaver
 Requires:       libnotify
 Requires:       nss
 Requires:       xdg-utils
+%endif
 
 %description
 OpenTubeX is a privacy-focused desktop client for YouTube.

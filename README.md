@@ -1,9 +1,10 @@
 # OpenTubeX RPM repository
 
-This repository publishes signed OpenTubeX packages for Fedora and compatible
-Enterprise Linux distributions at [rpm.opentubex.org](https://rpm.opentubex.org)
-and through [Fedora COPR](https://copr.fedorainfracloud.org/coprs/d3sox/opentubex/).
-It supports `x86_64` and `aarch64` systems.
+This repository publishes signed OpenTubeX packages for Fedora, compatible
+Enterprise Linux distributions, and openSUSE at
+[rpm.opentubex.org](https://rpm.opentubex.org) and through
+[Fedora COPR](https://copr.fedorainfracloud.org/coprs/d3sox/opentubex/).
+The hosted repository supports `x86_64` and `aarch64` systems.
 
 ## Install OpenTubeX
 
@@ -23,6 +24,17 @@ sudo curl --fail --location \
 sudo dnf install opentubex
 ```
 
+On openSUSE Leap 16.0 or Tumbleweed, use the OpenTubeX-hosted repository:
+
+```sh
+sudo rpm --import \
+  https://rpm.opentubex.org/opensuse/repodata/repomd.xml.key
+sudo zypper addrepo --refresh \
+  https://rpm.opentubex.org/opensuse/ \
+  opentubex
+sudo zypper install opentubex
+```
+
 ## How publishing works
 
 After an OpenTubeX release finishes uploading its packages, the application
@@ -30,13 +42,17 @@ repository sends an `opentubex-release` repository dispatch containing the
 release tag. The publish workflow then:
 
 1. downloads the `x86_64` and `aarch64` RPM assets;
-2. validates their package names and RPM architectures;
-3. signs each package and creates signed DNF repository metadata;
-4. sends the completed release tag to the COPR custom-package webhook;
-5. deploys the static repository to GitHub Pages.
+2. repackages them with openSUSE dependency names;
+3. validates and signs the Fedora-compatible and openSUSE packages;
+4. creates signed RPM-MD repositories at `/` and `/opensuse/`;
+5. sends the completed release tag to the COPR custom-package webhook;
+6. deploys the static repositories to GitHub Pages.
 
 COPR then downloads the release RPMs, generates its source package, and builds
-and signs packages for the configured Fedora and EPEL chroots.
+and signs packages for the configured Fedora, EPEL, and openSUSE chroots. The
+openSUSE chroots use distribution-specific dependency names from the same spec.
+COPR currently offers Leap 15.6 and Tumbleweed chroots; the hosted repository
+supports the current Leap 16.0 release as well.
 
 The workflow can also be run manually with a release tag. If no tag is given,
 it publishes the latest release.

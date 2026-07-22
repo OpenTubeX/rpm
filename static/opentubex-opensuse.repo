@@ -1,0 +1,8 @@
+[opentubex]
+name=OpenTubeX
+enabled=1
+autorefresh=1
+baseurl=https://rpm.opentubex.org/opensuse/
+type=rpm-md
+gpgcheck=1
+gpgkey=https://rpm.opentubex.org/opensuse/repodata/repomd.xml.key

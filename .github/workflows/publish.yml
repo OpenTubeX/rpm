@@ -29,7 +29,7 @@ jobs:
 
     steps:
       - name: Install tools
-        run: dnf --assumeyes install createrepo_c gh git gnupg2 rpm-sign
+        run: dnf --assumeyes install cpio createrepo_c gh git gnupg2 rpm-build rpm-sign
 
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.2.2
         with:
@@ -102,11 +102,16 @@ jobs:
           echo "fingerprint=$fingerprint" >> "$GITHUB_OUTPUT"
           echo "passphrase-file=$passphrase_file" >> "$GITHUB_OUTPUT"
 
+      - name: Build openSUSE packages
+        env:
+          VERSION: ${{ steps.release.outputs.version }}
+        run: ./scripts/build-opensuse-packages.sh release-files opensuse-files "$VERSION"
+
       - name: Build signed repository
         env:
           RPM_GPG_KEY_ID: ${{ steps.signing-key.outputs.fingerprint }}
           RPM_GPG_PASSPHRASE_FILE: ${{ steps.signing-key.outputs.passphrase-file }}
-        run: ./scripts/build-repository.sh release-files repository
+        run: ./scripts/build-repository.sh release-files repository opensuse-files
 
       - name: Upload repository
         uses: actions/upload-pages-artifact@7b1f4a764d45c48632c6b24a0339c27f5614fb0b # v4.0.0
@@ -114,7 +119,7 @@ jobs:
           path: repository
 
   copr:
-    name: Trigger Fedora COPR build
+    name: Trigger COPR build
     runs-on: ubuntu-latest
     permissions:
       contents: read
