@@ -5,6 +5,8 @@ set -euo pipefail
 rpm_directory=${1:-release-files}
 repository_directory=${2:-repository}
 opensuse_rpm_directory=${3:-}
+nightly_rpm_directory=${4:-}
+nightly_opensuse_rpm_directory=${5:-}
 
 if [[ ! -d "$rpm_directory" ]]; then
   printf 'Package directory does not exist: %s\n' "$rpm_directory" >&2
@@ -93,11 +95,24 @@ if [[ -n "$opensuse_rpm_directory" ]]; then
   publish_packages "$opensuse_rpm_directory" "$repository_directory/opensuse"
 fi
 
+if [[ -n "$nightly_rpm_directory" && -d "$nightly_rpm_directory" ]]; then
+  publish_packages "$nightly_rpm_directory" "$repository_directory/nightly"
+fi
+
+if [[ -n "$nightly_opensuse_rpm_directory" && -d "$nightly_opensuse_rpm_directory" ]]; then
+  publish_packages "$nightly_opensuse_rpm_directory" "$repository_directory/opensuse/nightly"
+fi
+
 gpg --batch --armor --export "$RPM_GPG_KEY_ID" > "$repository_directory/opentubex-repo-key.asc"
 
 if [[ -n "$opensuse_rpm_directory" ]]; then
   cp "$repository_directory/opentubex-repo-key.asc" \
     "$repository_directory/opensuse/repodata/repomd.xml.key"
+fi
+
+if [[ -n "$nightly_opensuse_rpm_directory" && -d "$nightly_opensuse_rpm_directory" ]]; then
+  cp "$repository_directory/opentubex-repo-key.asc" \
+    "$repository_directory/opensuse/nightly/repodata/repomd.xml.key"
 fi
 
 cp \
@@ -106,6 +121,8 @@ cp \
   static/favicon.svg \
   static/index.html \
   static/opentubex-opensuse.repo \
+  static/opentubex-nightly-opensuse.repo \
+  static/opentubex-nightly.repo \
   static/opentubex.repo \
   static/style.css \
   "$repository_directory/"

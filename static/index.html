@@ -23,6 +23,25 @@
 sudo dnf install opentubex</code></pre>
     </div>
 
+    <h2>Nightly builds</h2>
+    <p>Fedora-compatible systems can opt into development snapshots:</p>
+    <div class="card">
+      <pre><code>sudo curl --fail --location \
+  --output /etc/yum.repos.d/opentubex-nightly.repo \
+  https://rpm.opentubex.org/opentubex-nightly.repo
+sudo dnf install opentubex</code></pre>
+    </div>
+
+    <p>On openSUSE, add the isolated nightly repository:</p>
+    <div class="card">
+      <pre><code>sudo rpm --import \
+  https://rpm.opentubex.org/opensuse/nightly/repodata/repomd.xml.key
+sudo zypper addrepo --refresh \
+  https://rpm.opentubex.org/opensuse/nightly/ \
+  opentubex-nightly
+sudo zypper install opentubex</code></pre>
+    </div>
+
     <p>Alternatively, use the OpenTubeX-hosted repository:</p>
     <div class="card">
       <pre><code>sudo curl --fail --location \

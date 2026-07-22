@@ -4,11 +4,11 @@ set -euo pipefail
 
 source_directory=${1:-release-files}
 output_directory=${2:-distribution-files}
-version=${3:-}
+asset_version=${3:-}
 distribution=${4:-}
 
-if [[ ! "$version" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
-  printf 'Expected a version like 0.29.0, got: %s\n' "$version" >&2
+if [[ ! "$asset_version" =~ ^[0-9]+\.[0-9]+\.[0-9]+-(beta|nightly-[0-9]+)$ ]]; then
+  printf 'Expected a beta or nightly asset version, got: %s\n' "$asset_version" >&2
   exit 1
 fi
 
@@ -26,8 +26,8 @@ case "$distribution" in
 esac
 
 for source_name in \
-  "opentubex-${version}-beta.amd64.rpm" \
-  "opentubex-${version}-beta.arm64.rpm"; do
+  "opentubex-${asset_version}.amd64.rpm" \
+  "opentubex-${asset_version}.arm64.rpm"; do
   if [[ ! -f "$source_directory/$source_name" ]]; then
     printf 'Source package does not exist: %s\n' "$source_directory/$source_name" >&2
     exit 1
@@ -50,11 +50,22 @@ mkdir -p \
   "$build_directory/SPECS" \
   "$build_directory/SRPMS"
 
-cp "$source_directory/opentubex-${version}-beta.amd64.rpm" \
-  "$source_directory/opentubex-${version}-beta.arm64.rpm" \
+cp "$source_directory/opentubex-${asset_version}.amd64.rpm" \
+  "$source_directory/opentubex-${asset_version}.arm64.rpm" \
   "$build_directory/SOURCES/"
 
-sed "s/@VERSION@/$version/g" packaging/copr/opentubex.spec \
+mapfile -t package_versions < <(
+  rpm --query --package --queryformat '%{VERSION}\n' \
+    "$source_directory/opentubex-${asset_version}.amd64.rpm" \
+    "$source_directory/opentubex-${asset_version}.arm64.rpm" | sort -u
+)
+if (( ${#package_versions[@]} != 1 )); then
+  printf 'Source packages do not have one common RPM version\n' >&2
+  exit 1
+fi
+
+sed -e "s/@RPM_VERSION@/${package_versions[0]}/g" \
+  -e "s/@ASSET_VERSION@/$asset_version/g" packaging/copr/opentubex.spec \
   > "$build_directory/SPECS/opentubex.spec"
 
 for architecture in x86_64 aarch64; do

@@ -1,13 +1,13 @@
 %global __strip /bin/true
 
 Name:           opentubex
-Version:        @VERSION@
+Version:        @RPM_VERSION@
 Release:        1%{?dist}
 Summary:        Privacy-focused YouTube desktop client
 License:        AGPL-3.0-or-later
 URL:            https://opentubex.org
-Source0:        opentubex-@VERSION@-beta.amd64.rpm
-Source1:        opentubex-@VERSION@-beta.arm64.rpm
+Source0:        opentubex-@ASSET_VERSION@.amd64.rpm
+Source1:        opentubex-@ASSET_VERSION@.arm64.rpm
 
 ExclusiveArch:  x86_64 aarch64
 AutoReqProv:    no

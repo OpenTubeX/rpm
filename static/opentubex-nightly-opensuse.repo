@@ -1,0 +1,8 @@
+[opentubex-nightly]
+name=OpenTubeX Nightly
+enabled=1
+autorefresh=1
+baseurl=https://rpm.opentubex.org/opensuse/nightly/
+type=rpm-md
+gpgcheck=1
+gpgkey=https://rpm.opentubex.org/opensuse/nightly/repodata/repomd.xml.key

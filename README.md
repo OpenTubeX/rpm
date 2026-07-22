@@ -6,6 +6,10 @@ Enterprise Linux distributions, and openSUSE at
 [Fedora COPR](https://copr.fedorainfracloud.org/coprs/d3sox/opentubex/).
 The hosted repository supports `x86_64` and `aarch64` systems.
 
+Development snapshots are available through separate nightly repositories at
+`/nightly/` for Fedora-compatible systems and `/opensuse/nightly/` for
+openSUSE. Stable metadata never includes nightly packages.
+
 ## Install OpenTubeX
 
 With Fedora COPR:
@@ -37,14 +41,14 @@ sudo zypper install opentubex
 
 ## How publishing works
 
-After an OpenTubeX release finishes uploading its packages, the application
-repository sends an `opentubex-release` repository dispatch containing the
+After an OpenTubeX stable or nightly release finishes uploading its packages,
+the application repository sends a repository dispatch containing the exact
 release tag. The publish workflow then:
 
-1. downloads the `x86_64` and `aarch64` RPM assets;
+1. downloads the latest stable and nightly `x86_64` and `aarch64` RPM assets;
 2. repackages them with Fedora-compatible and openSUSE dependency names;
 3. validates and signs the Fedora-compatible and openSUSE packages;
-4. creates signed RPM-MD repositories at `/` and `/opensuse/`;
+4. creates signed stable and nightly RPM-MD repositories;
 5. sends the completed release tag to the COPR custom-package webhook;
 6. deploys the static repositories to GitHub Pages.
 
