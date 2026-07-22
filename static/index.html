@@ -15,7 +15,13 @@
     </p>
 
     <h2>Install</h2>
-    <p>Add the repository once, then install OpenTubeX:</p>
+    <p>Enable the Fedora COPR repository, then install OpenTubeX:</p>
+    <div class="card">
+      <pre><code>sudo dnf copr enable d3sox/opentubex
+sudo dnf install opentubex</code></pre>
+    </div>
+
+    <p>Alternatively, use the OpenTubeX-hosted repository:</p>
     <div class="card">
       <pre><code>sudo curl --fail --location \
   --output /etc/yum.repos.d/opentubex.repo \
