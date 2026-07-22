@@ -102,6 +102,8 @@ fi
 
 cp \
   static/CNAME \
+  static/favicon.ico \
+  static/favicon.svg \
   static/index.html \
   static/opentubex-opensuse.repo \
   static/opentubex.repo \
