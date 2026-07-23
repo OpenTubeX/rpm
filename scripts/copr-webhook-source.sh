@@ -38,6 +38,8 @@ wget --quiet \
   https://raw.githubusercontent.com/OpenTubeX/rpm/main/packaging/copr/opentubex.spec \
   --output-document="$result_directory/opentubex.spec.in"
 
-sed "s/@VERSION@/$version/g" \
+sed \
+  -e "s/@RPM_VERSION@/$version/g" \
+  -e "s/@ASSET_VERSION@/${version}-beta/g" \
   "$result_directory/opentubex.spec.in" > "$result_directory/opentubex.spec"
 rm "$result_directory/opentubex.spec.in"
