@@ -23,6 +23,24 @@
 sudo dnf install opentubex</code></pre>
     </div>
 
+    <p>Alternatively, use the OpenTubeX-hosted repository:</p>
+    <div class="card">
+      <pre><code>sudo curl --fail --location \
+  --output /etc/yum.repos.d/opentubex.repo \
+  https://rpm.opentubex.org/opentubex.repo
+sudo dnf install opentubex</code></pre>
+    </div>
+
+    <p>On openSUSE Leap 16.0 or Tumbleweed, use the OpenTubeX-hosted repository:</p>
+    <div class="card">
+      <pre><code>sudo rpm --import \
+  https://rpm.opentubex.org/opensuse/repodata/repomd.xml.key
+sudo zypper addrepo --refresh \
+  https://rpm.opentubex.org/opensuse/ \
+  opentubex
+sudo zypper install opentubex</code></pre>
+    </div>
+
     <h2>Nightly builds</h2>
     <p>Fedora-compatible systems can opt into development snapshots:</p>
     <div class="card">
@@ -39,24 +57,6 @@ sudo dnf install opentubex</code></pre>
 sudo zypper addrepo --refresh \
   https://rpm.opentubex.org/opensuse/nightly/ \
   opentubex-nightly
-sudo zypper install opentubex</code></pre>
-    </div>
-
-    <p>Alternatively, use the OpenTubeX-hosted repository:</p>
-    <div class="card">
-      <pre><code>sudo curl --fail --location \
-  --output /etc/yum.repos.d/opentubex.repo \
-  https://rpm.opentubex.org/opentubex.repo
-sudo dnf install opentubex</code></pre>
-    </div>
-
-    <p>On openSUSE Leap 16.0 or Tumbleweed, use the OpenTubeX-hosted repository:</p>
-    <div class="card">
-      <pre><code>sudo rpm --import \
-  https://rpm.opentubex.org/opensuse/repodata/repomd.xml.key
-sudo zypper addrepo --refresh \
-  https://rpm.opentubex.org/opensuse/ \
-  opentubex
 sudo zypper install opentubex</code></pre>
     </div>
 
