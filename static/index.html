@@ -7,6 +7,7 @@
   <link rel="icon" href="/favicon.ico" sizes="any">
   <link rel="icon" href="/favicon.svg" type="image/svg+xml">
   <link rel="stylesheet" href="/style.css">
+  <script src="/code-blocks.js" defer></script>
 </head>
 <body>
   <main>
@@ -19,13 +20,13 @@
     <h2>Install</h2>
     <p>Enable the Fedora COPR repository, then install OpenTubeX:</p>
     <div class="card">
-      <pre><code>sudo dnf copr enable d3sox/opentubex
+      <pre><code class="language-shell">sudo dnf copr enable d3sox/opentubex
 sudo dnf install opentubex</code></pre>
     </div>
 
     <p>Alternatively, use the OpenTubeX-hosted repository:</p>
     <div class="card">
-      <pre><code>sudo curl --fail --location \
+      <pre><code class="language-shell">sudo curl --fail --location \
   --output /etc/yum.repos.d/opentubex.repo \
   https://rpm.opentubex.org/opentubex.repo
 sudo dnf install opentubex</code></pre>
@@ -33,7 +34,7 @@ sudo dnf install opentubex</code></pre>
 
     <p>On openSUSE Leap 16.0 or Tumbleweed, use the OpenTubeX-hosted repository:</p>
     <div class="card">
-      <pre><code>sudo rpm --import \
+      <pre><code class="language-shell">sudo rpm --import \
   https://rpm.opentubex.org/opensuse/repodata/repomd.xml.key
 sudo zypper addrepo --refresh \
   https://rpm.opentubex.org/opensuse/ \
@@ -44,7 +45,7 @@ sudo zypper install opentubex</code></pre>
     <h2>Nightly builds</h2>
     <p>Fedora-compatible systems can opt into development snapshots:</p>
     <div class="card">
-      <pre><code>sudo curl --fail --location \
+      <pre><code class="language-shell">sudo curl --fail --location \
   --output /etc/yum.repos.d/opentubex-nightly.repo \
   https://rpm.opentubex.org/opentubex-nightly.repo
 sudo dnf install opentubex</code></pre>
@@ -52,7 +53,7 @@ sudo dnf install opentubex</code></pre>
 
     <p>On openSUSE, add the isolated nightly repository:</p>
     <div class="card">
-      <pre><code>sudo rpm --import \
+      <pre><code class="language-shell">sudo rpm --import \
   https://rpm.opentubex.org/opensuse/nightly/repodata/repomd.xml.key
 sudo zypper addrepo --refresh \
   https://rpm.opentubex.org/opensuse/nightly/ \
@@ -62,10 +63,10 @@ sudo zypper install opentubex</code></pre>
 
     <h2>Update</h2>
     <div class="card">
-      <pre><code>sudo dnf upgrade opentubex</code></pre>
+      <pre><code class="language-shell">sudo dnf upgrade opentubex</code></pre>
     </div>
     <div class="card">
-      <pre><code>sudo zypper update opentubex</code></pre>
+      <pre><code class="language-shell">sudo zypper update opentubex</code></pre>
     </div>
 
     <h2>Manual downloads</h2>

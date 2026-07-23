@@ -117,6 +117,7 @@ fi
 
 cp \
   static/CNAME \
+  static/code-blocks.js \
   static/favicon.ico \
   static/favicon.svg \
   static/index.html \
