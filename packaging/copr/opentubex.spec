@@ -2,9 +2,11 @@
 
 Name:           opentubex
 Version:        @RPM_VERSION@
-Release:        1%{?dist}
+Release:        2%{?dist}
 Summary:        Privacy-focused YouTube desktop client
 License:        AGPL-3.0-or-later
+# Keep this aligned with package.json so Zypper does not require a vendor change.
+Vendor:         OpenTubeX contributors <info@opentubex.org>
 URL:            https://opentubex.org
 Source0:        opentubex-@ASSET_VERSION@.amd64.rpm
 Source1:        opentubex-@ASSET_VERSION@.arm64.rpm
