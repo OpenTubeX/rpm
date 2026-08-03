@@ -45,9 +45,11 @@ jobs:
           requested_tag="$INPUT_TAG"
           stable_tag=''
           nightly_tag=''
+          promote_stable=false
 
           if [[ "$requested_tag" =~ ^v([0-9]+\.[0-9]+\.[0-9]+)-beta$ ]]; then
             stable_tag="$requested_tag"
+            promote_stable=true
           elif [[ "$requested_tag" =~ ^v([0-9]+\.[0-9]+\.[0-9]+-nightly-[0-9]+)$ ]]; then
             nightly_tag="$requested_tag"
           elif [[ -n "$requested_tag" ]]; then
@@ -57,6 +59,9 @@ jobs:
 
           if [[ -z "$stable_tag" ]]; then
             stable_tag="$(gh release view --repo OpenTubeX/OpenTubeX --json tagName --jq .tagName)"
+            if [[ -z "$requested_tag" ]]; then
+              promote_stable=true
+            fi
           fi
           if [[ ! "$stable_tag" =~ ^v([0-9]+\.[0-9]+\.[0-9]+)-beta$ ]]; then
             echo "Expected a stable tag, got: $stable_tag" >&2
@@ -79,11 +84,18 @@ jobs:
             nightly_version="${BASH_REMATCH[1]}"
           fi
 
+          nightly_asset_version="$nightly_version"
+          if [[ "$promote_stable" == true ]]; then
+            nightly_asset_version="${stable_version}-beta"
+          fi
+
           {
             echo "stable_tag=$stable_tag"
             echo "stable_version=$stable_version"
             echo "nightly_tag=$nightly_tag"
             echo "nightly_version=$nightly_version"
+            echo "nightly_asset_version=$nightly_asset_version"
+            echo "promote_stable=$promote_stable"
           } >> "$GITHUB_OUTPUT"
 
       - name: Download RPM packages
@@ -101,7 +113,7 @@ jobs:
             --pattern "opentubex-${VERSION}-beta.arm64.rpm"
 
       - name: Download nightly RPM packages
-        if: steps.release.outputs.nightly_tag != ''
+        if: steps.release.outputs.promote_stable != 'true' && steps.release.outputs.nightly_tag != ''
         env:
           RELEASE_TAG: ${{ steps.release.outputs.nightly_tag }}
           VERSION: ${{ steps.release.outputs.nightly_version }}
@@ -114,6 +126,10 @@ jobs:
             --dir nightly-files \
             --pattern "opentubex-${VERSION}.amd64.rpm" \
             --pattern "opentubex-${VERSION}.arm64.rpm"
+
+      - name: Promote stable RPM packages to nightly
+        if: steps.release.outputs.promote_stable == 'true'
+        run: cp --recursive release-files nightly-files
 
       - name: Import signing key
         id: signing-key
@@ -150,13 +166,13 @@ jobs:
       - name: Build distribution packages
         env:
           STABLE_VERSION: ${{ steps.release.outputs.stable_version }}
-          NIGHTLY_VERSION: ${{ steps.release.outputs.nightly_version }}
+          NIGHTLY_ASSET_VERSION: ${{ steps.release.outputs.nightly_asset_version }}
         run: |
           ./scripts/build-packages.sh release-files fedora-files "${STABLE_VERSION}-beta" fedora
           ./scripts/build-packages.sh release-files opensuse-files "${STABLE_VERSION}-beta" opensuse
-          if [[ -n "$NIGHTLY_VERSION" ]]; then
-            ./scripts/build-packages.sh nightly-files nightly-fedora-files "$NIGHTLY_VERSION" fedora
-            ./scripts/build-packages.sh nightly-files nightly-opensuse-files "$NIGHTLY_VERSION" opensuse
+          if [[ -n "$NIGHTLY_ASSET_VERSION" ]]; then
+            ./scripts/build-packages.sh nightly-files nightly-fedora-files "$NIGHTLY_ASSET_VERSION" fedora
+            ./scripts/build-packages.sh nightly-files nightly-opensuse-files "$NIGHTLY_ASSET_VERSION" opensuse
           fi
 
       - name: Build signed repository
