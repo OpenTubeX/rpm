@@ -191,7 +191,7 @@ jobs:
 
   copr:
     name: Trigger COPR build
-    if: github.event.action != 'opentubex-nightly'
+    if: github.event.action != 'opentubex-nightly' && !contains(inputs.releaseTag, '-nightly-')
     runs-on: ubuntu-latest
     permissions:
       contents: read
