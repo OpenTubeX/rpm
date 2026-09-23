@@ -29,7 +29,7 @@ jobs:
 
     steps:
       - name: Install tools
-        run: dnf --assumeyes install cpio createrepo_c gh git gnupg2 rpm-build rpm-sign
+        run: dnf --assumeyes install cpio createrepo_c gh git gnupg2 rpm-build rpm-sign wget
 
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
@@ -121,11 +121,12 @@ jobs:
         run: |
           set -euo pipefail
           mkdir nightly-files
-          gh release download "$RELEASE_TAG" \
-            --repo OpenTubeX/OpenTubeX \
-            --dir nightly-files \
-            --pattern "opentubex-${VERSION}.amd64.rpm" \
-            --pattern "opentubex-${VERSION}.arm64.rpm"
+          for arch in amd64 arm64; do
+            asset="opentubex-${VERSION}.${arch}.rpm"
+            wget --quiet \
+              --output-document="nightly-files/${asset}" \
+              "https://github.com/OpenTubeX/OpenTubeX/releases/download/${RELEASE_TAG}/${asset}"
+          done
 
       - name: Promote stable RPM packages to nightly
         if: steps.release.outputs.promote_stable == 'true'
