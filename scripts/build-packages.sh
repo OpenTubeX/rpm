@@ -68,6 +68,12 @@ sed -e "s/@RPM_VERSION@/${package_versions[0]}/g" \
   -e "s/@ASSET_VERSION@/$asset_version/g" packaging/copr/opentubex.spec \
   > "$build_directory/SPECS/opentubex.spec"
 
+# Keep the release notes that the OpenTubeX release build recorded in its RPM.
+changelog=$(rpm --query --package --changelog "$source_directory/opentubex-${asset_version}.amd64.rpm")
+if [[ -n "$changelog" ]]; then
+  printf '\n%%changelog\n%s\n' "$(sed 's/%/%%/g' <<< "$changelog")" >> "$build_directory/SPECS/opentubex.spec"
+fi
+
 for architecture in x86_64 aarch64; do
   rpmbuild -bb \
     --nodeps \
