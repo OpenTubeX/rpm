@@ -121,6 +121,7 @@ cp \
   static/favicon.ico \
   static/favicon.svg \
   static/index.html \
+  static/og.png \
   static/opentubex-opensuse.repo \
   static/opentubex-nightly-opensuse.repo \
   static/opentubex-nightly.repo \
