@@ -64,7 +64,14 @@ if (( ${#package_versions[@]} != 1 )); then
   exit 1
 fi
 
-sed -e "s/@RPM_VERSION@/${package_versions[0]}/g" \
+rpm_version=${package_versions[0]}
+# Nightlies are built after the release they are numbered after, so
+# 0.37.0.nightly.2527 must sort between the 0.37.0 and 0.37.1 releases.
+if [[ "$asset_version" =~ ^([0-9]+\.[0-9]+\.[0-9]+)-nightly-([0-9]+)$ ]]; then
+  rpm_version="${BASH_REMATCH[1]}.nightly.${BASH_REMATCH[2]}"
+fi
+
+sed -e "s/@RPM_VERSION@/$rpm_version/g" \
   -e "s/@ASSET_VERSION@/$asset_version/g" packaging/copr/opentubex.spec \
   > "$build_directory/SPECS/opentubex.spec"
 
