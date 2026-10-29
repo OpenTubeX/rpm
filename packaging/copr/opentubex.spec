@@ -13,7 +13,7 @@ Source1:        opentubex-@ASSET_VERSION@.arm64.rpm
 
 ExclusiveArch:  x86_64 aarch64
 AutoReqProv:    no
-BuildRequires:  cpio
+BuildRequires:  tar
 BuildRequires:  rpm
 %if 0%{?suse_version}
 Requires:       libXtst6
@@ -44,12 +44,13 @@ OpenTubeX is a privacy-focused desktop client for YouTube.
 %install
 mkdir -p %{buildroot}
 
+# rpm2cpio cannot unpack the v6 packages rpm 6 builds.
 %ifarch x86_64
-rpm2cpio %{SOURCE0} | (cd %{buildroot} && cpio --extract --make-directories --quiet)
+rpm2archive - < %{SOURCE0} | tar --extract --gzip --file - --directory %{buildroot}
 %endif
 
 %ifarch aarch64
-rpm2cpio %{SOURCE1} | (cd %{buildroot} && cpio --extract --make-directories --quiet)
+rpm2archive - < %{SOURCE1} | tar --extract --gzip --file - --directory %{buildroot}
 %endif
 
 mkdir -p %{buildroot}%{_bindir}
