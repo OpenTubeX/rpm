@@ -1,4 +1,6 @@
 %global __strip /bin/true
+# rpm 6 writes v6 packages by default, which EL9, EL10, and openSUSE cannot unpack.
+%global _rpmformat 4
 
 Name:           opentubex
 Version:        @RPM_VERSION@
