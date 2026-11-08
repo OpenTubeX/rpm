@@ -18,24 +18,14 @@ ExclusiveArch:  x86_64 aarch64
 AutoReqProv:    no
 BuildRequires:  tar
 BuildRequires:  rpm
-%if 0%{?suse_version}
-Requires:       libXtst6
-Requires:       libuuid1
-Requires:       at-spi2-core
-Requires:       libgtk-3-0
-Requires:       libXss1
-Requires:       libnotify4
-Requires:       mozilla-nss
-Requires:       xdg-utils
-%else
+# Each pair names the Fedora and openSUSE package, so one build serves both.
+Requires:       (gtk3 or libgtk-3-0)
+Requires:       (libnotify or libnotify4)
+Requires:       (nss or mozilla-nss)
 Requires:       (libXtst or libXtst6)
 Requires:       (libuuid or libuuid1)
 Requires:       at-spi2-core
-Requires:       gtk3
-Requires:       libnotify
-Requires:       nss
 Requires:       xdg-utils
-%endif
 
 %description
 OpenTubeX is a privacy-focused desktop client for YouTube.

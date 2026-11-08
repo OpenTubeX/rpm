@@ -47,5 +47,5 @@ rm "$result_directory/opentubex.spec.in"
 # Keep the release notes that the OpenTubeX release build recorded in its RPM.
 changelog=$(rpm --query --package --changelog "$result_directory/opentubex-${version}-beta.amd64.rpm")
 if [[ -n "$changelog" ]]; then
-  printf '\n%%changelog\n%s\n' "$(sed 's/%/%%/g' <<< "$changelog")" >> "$result_directory/opentubex.spec"
+  printf '\n%%changelog\n%s\n' "${changelog//%/%%}" >> "$result_directory/opentubex.spec"
 fi

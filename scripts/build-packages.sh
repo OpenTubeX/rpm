@@ -1,75 +1,32 @@
 #!/usr/bin/env bash
+# Repackages the amd64 and arm64 release RPMs of one OpenTubeX release.
+# Usage: build-packages.sh SOURCE_DIRECTORY OUTPUT_DIRECTORY ASSET_VERSION
 
 set -euo pipefail
 
-source_directory=${1:-release-files}
-output_directory=${2:-distribution-files}
-asset_version=${3:-}
-distribution=${4:-}
+source_directory=$1
+output_directory=$2
+asset_version=$3
 
-if [[ ! "$asset_version" =~ ^[0-9]+\.[0-9]+\.[0-9]+-(beta|nightly-[0-9]+)$ ]]; then
+if [[ ! "$asset_version" =~ ^([0-9]+\.[0-9]+\.[0-9]+)-(beta|nightly-([0-9]+))$ ]]; then
   printf 'Expected a beta or nightly asset version, got: %s\n' "$asset_version" >&2
   exit 1
 fi
 
-case "$distribution" in
-  fedora)
-    rpm_defines=()
-    ;;
-  opensuse)
-    rpm_defines=(--define 'suse_version 160000' --define 'dist .opensuse')
-    ;;
-  *)
-    printf 'Expected distribution to be fedora or opensuse, got: %s\n' "$distribution" >&2
-    exit 1
-    ;;
-esac
-
-for source_name in \
-  "opentubex-${asset_version}.amd64.rpm" \
-  "opentubex-${asset_version}.arm64.rpm"; do
-  if [[ ! -f "$source_directory/$source_name" ]]; then
-    printf 'Source package does not exist: %s\n' "$source_directory/$source_name" >&2
-    exit 1
-  fi
-done
-
-if [[ -z "$output_directory" || "$output_directory" == '/' || "$output_directory" == '.' ]]; then
-  printf 'Unsafe output directory: %s\n' "$output_directory" >&2
-  exit 1
+# Nightlies are built after the release they are numbered after, so
+# 0.37.0.nightly.2527 must sort between the 0.37.0 and 0.37.1 releases.
+rpm_version=${BASH_REMATCH[1]}
+if [[ -n "${BASH_REMATCH[3]}" ]]; then
+  rpm_version+=".nightly.${BASH_REMATCH[3]}"
 fi
 
 build_directory=$(mktemp -d)
 trap 'rm -rf -- "$build_directory"' EXIT
-
-mkdir -p \
-  "$build_directory/BUILD" \
-  "$build_directory/BUILDROOT" \
-  "$build_directory/RPMS" \
-  "$build_directory/SOURCES" \
-  "$build_directory/SPECS" \
-  "$build_directory/SRPMS"
+mkdir -p "$build_directory/SOURCES" "$build_directory/SPECS"
 
 cp "$source_directory/opentubex-${asset_version}.amd64.rpm" \
   "$source_directory/opentubex-${asset_version}.arm64.rpm" \
   "$build_directory/SOURCES/"
-
-mapfile -t package_versions < <(
-  rpm --query --package --queryformat '%{VERSION}\n' \
-    "$source_directory/opentubex-${asset_version}.amd64.rpm" \
-    "$source_directory/opentubex-${asset_version}.arm64.rpm" | sort -u
-)
-if (( ${#package_versions[@]} != 1 )); then
-  printf 'Source packages do not have one common RPM version\n' >&2
-  exit 1
-fi
-
-rpm_version=${package_versions[0]}
-# Nightlies are built after the release they are numbered after, so
-# 0.37.0.nightly.2527 must sort between the 0.37.0 and 0.37.1 releases.
-if [[ "$asset_version" =~ ^([0-9]+\.[0-9]+\.[0-9]+)-nightly-([0-9]+)$ ]]; then
-  rpm_version="${BASH_REMATCH[1]}.nightly.${BASH_REMATCH[2]}"
-fi
 
 sed -e "s/@RPM_VERSION@/$rpm_version/g" \
   -e "s/@ASSET_VERSION@/$asset_version/g" packaging/copr/opentubex.spec \
@@ -78,25 +35,19 @@ sed -e "s/@RPM_VERSION@/$rpm_version/g" \
 # Keep the release notes that the OpenTubeX release build recorded in its RPM.
 changelog=$(rpm --query --package --changelog "$source_directory/opentubex-${asset_version}.amd64.rpm")
 if [[ -n "$changelog" ]]; then
-  printf '\n%%changelog\n%s\n' "$(sed 's/%/%%/g' <<< "$changelog")" >> "$build_directory/SPECS/opentubex.spec"
+  printf '\n%%changelog\n%s\n' "${changelog//%/%%}" >> "$build_directory/SPECS/opentubex.spec"
 fi
 
+# One package per architecture serves Fedora, Enterprise Linux, and openSUSE,
+# so it carries no distribution tag.
 for architecture in x86_64 aarch64; do
   rpmbuild -bb \
     --nodeps \
     --target "$architecture" \
     --define "_topdir $build_directory" \
-    "${rpm_defines[@]}" \
+    --define 'dist %{nil}' \
     "$build_directory/SPECS/opentubex.spec"
 done
 
-rm -rf -- "$output_directory"
 mkdir -p "$output_directory"
-
-mapfile -t packages < <(find "$build_directory/RPMS" -type f -name '*.rpm' -print | sort)
-if (( ${#packages[@]} != 2 )); then
-  printf 'Expected two %s packages, found %d\n' "$distribution" "${#packages[@]}" >&2
-  exit 1
-fi
-
-cp "${packages[@]}" "$output_directory/"
+cp "$build_directory"/RPMS/*/*.rpm "$output_directory/"

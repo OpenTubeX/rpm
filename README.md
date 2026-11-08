@@ -6,9 +6,9 @@ Enterprise Linux distributions, and openSUSE at
 [Fedora COPR](https://copr.fedorainfracloud.org/coprs/d3sox/opentubex/).
 The hosted repository supports `x86_64` and `aarch64` systems.
 
-Development snapshots are available through separate nightly repositories at
-`/nightly/` for Fedora-compatible systems and `/opensuse/nightly/` for
-openSUSE. Stable metadata never includes nightly packages.
+Development snapshots are available through a separate nightly repository at
+`/nightly/`. Stable metadata never includes nightly packages. All distributions
+share the same packages.
 
 ## Install OpenTubeX
 
@@ -31,13 +31,11 @@ sudo dnf install opentubex
 On openSUSE Leap 16.0 or Tumbleweed, use the OpenTubeX-hosted repository:
 
 ```sh
-sudo rpm --import \
-  https://rpm.opentubex.org/opensuse/repodata/repomd.xml.key
-sudo zypper addrepo --refresh \
-  https://rpm.opentubex.org/opensuse/ \
-  opentubex
+sudo zypper addrepo https://rpm.opentubex.org/opentubex.repo
 sudo zypper install opentubex
 ```
+
+For nightly builds, use `opentubex-nightly.repo` instead of `opentubex.repo`.
 
 ## How publishing works
 
@@ -45,21 +43,24 @@ After an OpenTubeX stable or nightly release finishes uploading its packages,
 the application repository sends a repository dispatch containing the exact
 release tag. The publish workflow then:
 
-1. downloads the latest stable and nightly `x86_64` and `aarch64` RPM assets;
-2. repackages them with Fedora-compatible and openSUSE dependency names;
-3. validates and signs the Fedora-compatible and openSUSE packages;
-4. creates signed stable and nightly RPM-MD repositories;
-5. sends the completed release tag to the COPR custom-package webhook;
-6. deploys the static repositories to GitHub Pages.
+1. resolves the latest stable release and the latest nightly; the nightly
+   repository follows whichever of the two was published last;
+2. repackages their `x86_64` and `aarch64` RPM assets with dependencies that
+   resolve on Fedora, Enterprise Linux, and openSUSE;
+3. signs the packages and the stable and nightly RPM-MD repositories;
+4. sends stable release tags to the COPR custom-package webhook;
+5. deploys the static repositories to GitHub Pages.
+
+A channel whose release, packaging files, and signing key are unchanged reuses
+its published packages instead of rebuilding them. The `/opensuse/` and
+`/opensuse/nightly/` paths keep working for older openSUSE installations and
+serve the same packages.
 
 COPR then downloads the release RPMs, generates its source package, and builds
-and signs packages for the configured Fedora, EPEL, and openSUSE chroots. The
-openSUSE chroots use distribution-specific dependency names from the same spec.
-COPR currently offers Leap 15.6 and Tumbleweed chroots; the hosted repository
-supports the current Leap 16.0 release as well.
+and signs packages for the configured Fedora and EPEL chroots.
 
-The workflow can also be run manually with a release tag. If no tag is given,
-it publishes the latest release.
+The workflow can also be run manually. It then publishes the latest stable
+release and nightly.
 
 ## Maintainer setup
 
@@ -73,7 +74,7 @@ it publishes the latest release.
    `rpm.opentubex.org` as the custom domain.
 5. Add a DNS `CNAME` record from `rpm.opentubex.org` to
    `opentubex.github.io`.
-6. Run the **Publish RPM repository** workflow once with a release tag.
+6. Run the **Publish RPM repository** workflow once.
 
 The OpenTubeX application repository uses its existing `PUSH_TOKEN` secret to
 send the cross-repository dispatch. That token needs write access to this

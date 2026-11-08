@@ -4,11 +4,6 @@ on:
   repository_dispatch:
     types: [opentubex-release, opentubex-nightly]
   workflow_dispatch:
-    inputs:
-      releaseTag:
-        description: Release tag to publish (for example, v0.29.0-beta)
-        required: false
-        type: string
 
 permissions:
   contents: read
@@ -39,98 +34,41 @@ jobs:
         id: release
         shell: bash
         env:
-          INPUT_TAG: ${{ github.event.client_payload.tag || inputs.releaseTag }}
+          REQUESTED_TAG: ${{ github.event.client_payload.tag }}
         run: |
           set -euo pipefail
-          requested_tag="$INPUT_TAG"
-          stable_tag=''
-          nightly_tag=''
-          promote_stable=false
+          stable_tag="$(gh release view --repo OpenTubeX/OpenTubeX --json tagName --jq .tagName)"
+          nightly_tag="$(gh release list --repo OpenTubeX/OpenTubeX --limit 100 \
+            --json isPrerelease,publishedAt,tagName \
+            --jq '[.[] | select(.isPrerelease and (.tagName | test("^v[0-9]+\\.[0-9]+\\.[0-9]+-nightly-[0-9]+$")))] | sort_by(.publishedAt) | last | .tagName // ""')"
 
-          if [[ "$requested_tag" =~ ^v([0-9]+\.[0-9]+\.[0-9]+)-beta$ ]]; then
-            stable_tag="$requested_tag"
-            promote_stable=true
-          elif [[ "$requested_tag" =~ ^v([0-9]+\.[0-9]+\.[0-9]+-nightly-[0-9]+)$ ]]; then
-            nightly_tag="$requested_tag"
-          elif [[ -n "$requested_tag" ]]; then
-            echo "Expected a stable or nightly OpenTubeX tag, got: $requested_tag" >&2
+          # Release listings can lag behind, so the dispatched tag takes precedence.
+          if [[ "$REQUESTED_TAG" =~ ^v[0-9]+\.[0-9]+\.[0-9]+-beta$ ]]; then
+            stable_tag="$REQUESTED_TAG"
+          elif [[ "$REQUESTED_TAG" =~ ^v[0-9]+\.[0-9]+\.[0-9]+-nightly-[0-9]+$ ]]; then
+            nightly_tag="$REQUESTED_TAG"
+          elif [[ -n "$REQUESTED_TAG" ]]; then
+            echo "Expected a stable or nightly OpenTubeX tag, got: $REQUESTED_TAG" >&2
             exit 1
           fi
 
-          if [[ -z "$stable_tag" ]]; then
-            stable_tag="$(gh release view --repo OpenTubeX/OpenTubeX --json tagName --jq .tagName)"
-            if [[ -z "$requested_tag" ]]; then
-              promote_stable=true
-            fi
-          fi
-          if [[ ! "$stable_tag" =~ ^v([0-9]+\.[0-9]+\.[0-9]+)-beta$ ]]; then
+          if [[ ! "$stable_tag" =~ ^v[0-9]+\.[0-9]+\.[0-9]+-beta$ ]]; then
             echo "Expected a stable tag, got: $stable_tag" >&2
             exit 1
           fi
-          stable_version="${BASH_REMATCH[1]}"
 
-          if [[ -z "$nightly_tag" ]]; then
-            nightly_tag="$(gh release list --repo OpenTubeX/OpenTubeX --limit 100 \
-              --json createdAt,isPrerelease,tagName \
-              --jq '[.[] | select(.isPrerelease and (.tagName | test("^v[0-9]+\\.[0-9]+\\.[0-9]+-nightly-[0-9]+$")))] | sort_by(.createdAt) | reverse | .[0].tagName // ""')"
-          fi
-
-          nightly_version=''
-          if [[ -n "$nightly_tag" ]]; then
-            if [[ ! "$nightly_tag" =~ ^v([0-9]+\.[0-9]+\.[0-9]+-nightly-[0-9]+)$ ]]; then
-              echo "Expected a nightly tag, got: $nightly_tag" >&2
-              exit 1
-            fi
-            nightly_version="${BASH_REMATCH[1]}"
-          fi
-
-          nightly_asset_version="$nightly_version"
-          if [[ "$promote_stable" == true ]]; then
-            nightly_asset_version="${stable_version}-beta"
+          # The nightly repository follows whichever of the two was published last.
+          published_at() {
+            gh release view "$1" --repo OpenTubeX/OpenTubeX --json publishedAt --jq .publishedAt
+          }
+          if [[ -z "$nightly_tag" || "$(published_at "$stable_tag")" > "$(published_at "$nightly_tag")" ]]; then
+            nightly_tag="$stable_tag"
           fi
 
           {
             echo "stable_tag=$stable_tag"
-            echo "stable_version=$stable_version"
             echo "nightly_tag=$nightly_tag"
-            echo "nightly_version=$nightly_version"
-            echo "nightly_asset_version=$nightly_asset_version"
-            echo "promote_stable=$promote_stable"
           } >> "$GITHUB_OUTPUT"
-
-      - name: Download RPM packages
-        env:
-          RELEASE_TAG: ${{ steps.release.outputs.stable_tag }}
-          VERSION: ${{ steps.release.outputs.stable_version }}
-        shell: bash
-        run: |
-          set -euo pipefail
-          mkdir release-files
-          gh release download "$RELEASE_TAG" \
-            --repo OpenTubeX/OpenTubeX \
-            --dir release-files \
-            --pattern "opentubex-${VERSION}-beta.amd64.rpm" \
-            --pattern "opentubex-${VERSION}-beta.arm64.rpm"
-
-      - name: Download nightly RPM packages
-        if: steps.release.outputs.promote_stable != 'true' && steps.release.outputs.nightly_tag != ''
-        env:
-          RELEASE_TAG: ${{ steps.release.outputs.nightly_tag }}
-          VERSION: ${{ steps.release.outputs.nightly_version }}
-        shell: bash
-        run: |
-          set -euo pipefail
-          mkdir nightly-files
-          for arch in amd64 arm64; do
-            asset="opentubex-${VERSION}.${arch}.rpm"
-            wget --quiet \
-              --output-document="nightly-files/${asset}" \
-              "https://github.com/OpenTubeX/OpenTubeX/releases/download/${RELEASE_TAG}/${asset}"
-          done
-
-      - name: Promote stable RPM packages to nightly
-        if: steps.release.outputs.promote_stable == 'true'
-        run: cp --recursive release-files nightly-files
 
       - name: Import signing key
         id: signing-key
@@ -164,25 +102,13 @@ jobs:
           echo "fingerprint=$fingerprint" >> "$GITHUB_OUTPUT"
           echo "passphrase-file=$passphrase_file" >> "$GITHUB_OUTPUT"
 
-      - name: Build distribution packages
-        env:
-          STABLE_VERSION: ${{ steps.release.outputs.stable_version }}
-          NIGHTLY_ASSET_VERSION: ${{ steps.release.outputs.nightly_asset_version }}
-        run: |
-          ./scripts/build-packages.sh release-files fedora-files "${STABLE_VERSION}-beta" fedora
-          ./scripts/build-packages.sh release-files opensuse-files "${STABLE_VERSION}-beta" opensuse
-          if [[ -n "$NIGHTLY_ASSET_VERSION" ]]; then
-            ./scripts/build-packages.sh nightly-files nightly-fedora-files "$NIGHTLY_ASSET_VERSION" fedora
-            ./scripts/build-packages.sh nightly-files nightly-opensuse-files "$NIGHTLY_ASSET_VERSION" opensuse
-          fi
-
       - name: Build signed repository
         env:
           RPM_GPG_KEY_ID: ${{ steps.signing-key.outputs.fingerprint }}
           RPM_GPG_PASSPHRASE_FILE: ${{ steps.signing-key.outputs.passphrase-file }}
-        run: |
-          ./scripts/build-repository.sh fedora-files repository opensuse-files \
-            nightly-fedora-files nightly-opensuse-files
+          STABLE_TAG: ${{ steps.release.outputs.stable_tag }}
+          NIGHTLY_TAG: ${{ steps.release.outputs.nightly_tag }}
+        run: ./scripts/build-repository.sh "$STABLE_TAG" "$NIGHTLY_TAG" repository
 
       - name: Upload repository
         uses: actions/upload-pages-artifact@fc324d3547104276b827a68afc52ff2a11cc49c9 # v5.0.0
@@ -191,41 +117,22 @@ jobs:
 
   copr:
     name: Trigger COPR build
-    if: github.event.action != 'opentubex-nightly' && !contains(inputs.releaseTag, '-nightly-')
+    if: github.event.action == 'opentubex-release'
     runs-on: ubuntu-latest
-    permissions:
-      contents: read
-    env:
-      GH_TOKEN: ${{ github.token }}
+    permissions: {}
 
     steps:
-      - name: Resolve release
-        id: release
-        shell: bash
-        env:
-          INPUT_TAG: ${{ github.event.client_payload.tag || inputs.releaseTag }}
-        run: |
-          set -euo pipefail
-          tag="$INPUT_TAG"
-
-          if [[ -z "$tag" ]]; then
-            tag="$(gh release view --repo OpenTubeX/OpenTubeX --json tagName --jq .tagName)"
-          fi
-
-          if [[ ! "$tag" =~ ^v([0-9]+\.[0-9]+\.[0-9]+)-beta$ ]]; then
-            echo "Expected a tag like v0.29.0-beta, got: $tag" >&2
-            exit 1
-          fi
-
-          echo "tag=$tag" >> "$GITHUB_OUTPUT"
-
       - name: Trigger build
         env:
           COPR_WEBHOOK_URL: ${{ secrets.COPR_WEBHOOK_URL }}
-          RELEASE_TAG: ${{ steps.release.outputs.tag }}
+          RELEASE_TAG: ${{ github.event.client_payload.tag }}
         shell: bash
         run: |
           set -euo pipefail
+          if [[ ! "$RELEASE_TAG" =~ ^v[0-9]+\.[0-9]+\.[0-9]+-beta$ ]]; then
+            echo "Expected a tag like v0.29.0-beta, got: $RELEASE_TAG" >&2
+            exit 1
+          fi
           if [[ -z "$COPR_WEBHOOK_URL" ]]; then
             echo 'The COPR_WEBHOOK_URL secret is not configured.' >&2
             exit 1
@@ -237,7 +144,7 @@ jobs:
             "$COPR_WEBHOOK_URL"
 
   deploy:
-    name: Publish stable repository
+    name: Publish repository
     needs: build
     runs-on: ubuntu-latest
     environment:
