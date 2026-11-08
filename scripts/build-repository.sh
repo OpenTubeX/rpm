@@ -24,6 +24,14 @@ fi
 work_directory=$(mktemp -d)
 trap 'rm -rf -- "$work_directory"' EXIT
 
+# Fedora's wget2 can exit successfully without a file after retrying server
+# errors, so use curl, which fails reliably.
+download() {
+  curl --fail --silent --show-error --location \
+    --retry 5 --retry-all-errors --retry-delay 30 \
+    --output "$1" "$2"
+}
+
 # Rebuilding an unchanged release would publish the same package names with new
 # checksums, which breaks downloads for clients with cached metadata. Reuse the
 # published packages while the release, packaging, and signing key stay the same.
@@ -42,19 +50,18 @@ publish_packages() {
   fi
   mkdir -p "$package_directory"
 
-  if build_info=$(wget --quiet --output-document=- "$published_url/build-info?$(date +%s)") \
+  if build_info=$(curl --fail --silent --location "$published_url/build-info?$(date +%s)") \
     && [[ "$(head -n 1 <<< "$build_info")" == "$fingerprint" ]]; then
     printf 'Reusing the published %s packages\n' "$asset_version"
     while read -r _ package_name; do
-      wget --quiet --output-document="$package_directory/$package_name" "$published_url/$package_name"
+      download "$package_directory/$package_name" "$published_url/$package_name"
     done < <(tail -n +2 <<< "$build_info")
     (cd "$package_directory" && tail -n +2 <<< "$build_info" | sha256sum --check --quiet)
   else
     printf 'Building the %s packages\n' "$asset_version"
     mkdir -p "$work_directory/sources"
     for architecture in amd64 arm64; do
-      wget --quiet --tries=5 --waitretry=30 --retry-on-http-error=429,500,502,503,504 \
-        --output-document="$work_directory/sources/opentubex-${asset_version}.${architecture}.rpm" \
+      download "$work_directory/sources/opentubex-${asset_version}.${architecture}.rpm" \
         "$release_url/$tag/opentubex-${asset_version}.${architecture}.rpm"
     done
     ./scripts/build-packages.sh "$work_directory/sources" "$package_directory" "$asset_version"

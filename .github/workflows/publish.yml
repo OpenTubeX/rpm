@@ -24,7 +24,7 @@ jobs:
 
     steps:
       - name: Install tools
-        run: dnf --assumeyes install createrepo_c gh git gnupg2 rpm-build rpm-sign tar wget
+        run: dnf --assumeyes install createrepo_c gh git gnupg2 rpm-build rpm-sign tar
 
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
