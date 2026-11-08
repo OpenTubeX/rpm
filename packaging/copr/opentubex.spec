@@ -2,7 +2,8 @@
 
 Name:           opentubex
 Version:        @RPM_VERSION@
-Release:        2%{?dist}
+# Increase when a packaging change must reach users before the next release.
+Release:        3%{?dist}
 Summary:        Privacy-focused YouTube desktop client
 License:        AGPL-3.0-or-later
 # Keep this aligned with package.json so Zypper does not require a vendor change.
@@ -46,11 +47,11 @@ mkdir -p %{buildroot}
 
 # rpm2cpio cannot unpack the v6 packages rpm 6 builds.
 %ifarch x86_64
-rpm2archive - < %{SOURCE0} | tar --extract --gzip --file - --directory %{buildroot}
+rpm2archive - < %{SOURCE0} | tar --extract --no-same-permissions --gzip --file - --directory %{buildroot}
 %endif
 
 %ifarch aarch64
-rpm2archive - < %{SOURCE1} | tar --extract --gzip --file - --directory %{buildroot}
+rpm2archive - < %{SOURCE1} | tar --extract --no-same-permissions --gzip --file - --directory %{buildroot}
 %endif
 
 mkdir -p %{buildroot}%{_bindir}
