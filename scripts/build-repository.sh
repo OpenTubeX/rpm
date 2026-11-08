@@ -53,7 +53,7 @@ publish_packages() {
     printf 'Building the %s packages\n' "$asset_version"
     mkdir -p "$work_directory/sources"
     for architecture in amd64 arm64; do
-      wget --quiet --tries=3 \
+      wget --quiet --tries=5 --waitretry=30 --retry-on-http-error=429,500,502,503,504 \
         --output-document="$work_directory/sources/opentubex-${asset_version}.${architecture}.rpm" \
         "$release_url/$tag/opentubex-${asset_version}.${architecture}.rpm"
     done
