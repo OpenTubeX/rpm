@@ -59,8 +59,8 @@ serve the same packages.
 COPR then downloads the release RPMs, generates its source package, and builds
 and signs packages for the configured Fedora and EPEL chroots.
 
-The workflow can also be run manually. It then publishes the latest stable
-release and nightly.
+The workflow can also be run manually. It publishes the latest stable release
+and nightly, or the release given as `releaseTag`.
 
 ## Maintainer setup
 

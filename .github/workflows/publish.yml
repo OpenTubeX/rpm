@@ -4,6 +4,11 @@ on:
   repository_dispatch:
     types: [opentubex-release, opentubex-nightly]
   workflow_dispatch:
+    inputs:
+      releaseTag:
+        description: Release tag to publish (for example, v0.29.0-beta). Leave empty for the latest releases.
+        required: false
+        type: string
 
 permissions:
   contents: read
@@ -34,7 +39,7 @@ jobs:
         id: release
         shell: bash
         env:
-          REQUESTED_TAG: ${{ github.event.client_payload.tag }}
+          REQUESTED_TAG: ${{ github.event.client_payload.tag || inputs.releaseTag }}
         run: |
           set -euo pipefail
           stable_tag="$(gh release view --repo OpenTubeX/OpenTubeX --json tagName --jq .tagName)"
@@ -117,7 +122,7 @@ jobs:
 
   copr:
     name: Trigger COPR build
-    if: github.event.action == 'opentubex-release'
+    if: github.event.action != 'opentubex-nightly' && !contains(inputs.releaseTag, '-nightly-')
     runs-on: ubuntu-latest
     permissions: {}
 
@@ -125,10 +130,14 @@ jobs:
       - name: Trigger build
         env:
           COPR_WEBHOOK_URL: ${{ secrets.COPR_WEBHOOK_URL }}
-          RELEASE_TAG: ${{ github.event.client_payload.tag }}
+          GH_TOKEN: ${{ github.token }}
+          RELEASE_TAG: ${{ github.event.client_payload.tag || inputs.releaseTag }}
         shell: bash
         run: |
           set -euo pipefail
+          if [[ -z "$RELEASE_TAG" ]]; then
+            RELEASE_TAG="$(gh release view --repo OpenTubeX/OpenTubeX --json tagName --jq .tagName)"
+          fi
           if [[ ! "$RELEASE_TAG" =~ ^v[0-9]+\.[0-9]+\.[0-9]+-beta$ ]]; then
             echo "Expected a tag like v0.29.0-beta, got: $RELEASE_TAG" >&2
             exit 1
