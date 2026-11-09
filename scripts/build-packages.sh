@@ -18,6 +18,15 @@ fi
 rpm_version=${BASH_REMATCH[1]}
 if [[ -n "${BASH_REMATCH[3]}" ]]; then
   rpm_version+=".nightly.${BASH_REMATCH[3]}"
+else
+  # Stable release RPMs carry the plain version; reject assets from another release.
+  mapfile -t packages < <(rpm --query --package --queryformat '%{NAME} %{VERSION}\n' \
+    "$source_directory/opentubex-${asset_version}.amd64.rpm" \
+    "$source_directory/opentubex-${asset_version}.arm64.rpm" | sort -u)
+  if [[ "${packages[*]}" != "opentubex $rpm_version" ]]; then
+    printf 'Expected opentubex %s source packages, got: %s\n' "$rpm_version" "${packages[*]}" >&2
+    exit 1
+  fi
 fi
 
 build_directory=$(mktemp -d)
@@ -49,5 +58,10 @@ for architecture in x86_64 aarch64; do
     "$build_directory/SPECS/opentubex.spec"
 done
 
+built=("$build_directory"/RPMS/*/*.rpm)
+if (( ${#built[@]} != 2 )); then
+  printf 'Expected two packages, found %d\n' "${#built[@]}" >&2
+  exit 1
+fi
 mkdir -p "$output_directory"
-cp "$build_directory"/RPMS/*/*.rpm "$output_directory/"
+cp "${built[@]}" "$output_directory/"
