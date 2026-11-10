@@ -19,11 +19,13 @@ AutoReqProv:    no
 BuildRequires:  tar
 BuildRequires:  rpm
 # Each pair names the Fedora and openSUSE package, so one build serves both.
+Requires:       (alsa-lib or libasound2)
 Requires:       (gtk3 or libgtk-3-0)
 Requires:       (libnotify or libnotify4)
 Requires:       (nss or mozilla-nss)
 Requires:       (libXtst or libXtst6)
 Requires:       (libuuid or libuuid1)
+Requires:       (mesa-libgbm or libgbm1)
 Requires:       at-spi2-core
 Requires:       xdg-utils
 
